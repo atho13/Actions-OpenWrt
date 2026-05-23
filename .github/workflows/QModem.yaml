@@ -13,18 +13,18 @@ jobs:
           # --- OPENWRT 24.10 TARGETS (.ipk) ---
           - version: "24.10.4"
             arch: "aarch64_generic"
-            sdk_url: "https://openwrt.org"
+            sdk_url: "https://downloads.openwrt.org/releases/24.10.6/targets/armsr/armv8/openwrt-sdk-24.10.6-armsr-armv8_gcc-13.3.0_musl.Linux-x86_64.tar.zst"
           - version: "24.10.4"
             arch: "x86_64"
-            sdk_url: "https://openwrt.org"
+            sdk_url: "https://downloads.openwrt.org/releases/24.10.6/targets/x86/64/openwrt-sdk-24.10.6-x86-64_gcc-13.3.0_musl.Linux-x86_64.tar.zst"
 
           # --- OPENWRT 25.12 TARGETS (.apk) ---
           - version: "25.12.0"
             arch: "aarch64_generic"
-            sdk_url: "https://openwrt.org"
+            sdk_url: "https://downloads.openwrt.org/releases/25.12.4/targets/armsr/armv8/openwrt-sdk-25.12.4-armsr-armv8_gcc-14.3.0_musl.Linux-x86_64.tar.zst"
           - version: "25.12.0"
             arch: "x86_64"
-            sdk_url: "https://openwrt.org"
+            sdk_url: "https://downloads.openwrt.org/releases/25.12.4/targets/x86/64/openwrt-sdk-25.12.4-x86-64_gcc-14.3.0_musl.Linux-x86_64.tar.zst"
 
     steps:
       - name: Checkout Repository
