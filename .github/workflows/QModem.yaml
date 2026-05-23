@@ -41,10 +41,18 @@ jobs:
           mkdir sdk && tar --use-compress-program=zstd -xf sdk.tar.zst -C sdk --strip-components=1
           rm sdk.tar.zst
 
-      - name: Add QModem Feed Source
+      - name: Fix and Set Clean QModem Feed
         run: |
           cd sdk
-          echo 'src-git qmodem https://github.com' >> feeds.conf.default
+          # Mengosongkan file lama dan langsung mengisinya dengan format teks murni yang aman
+          cat << 'EOF' > feeds.conf.default
+          src-git base https://github.com
+          src-git packages https://github.com
+          src-git luci https://github.com
+          src-git routing https://github.com
+          src-git telephony https://github.com
+          src-git qmodem https://github.com
+          EOF
           ./scripts/feeds update qmodem
           ./scripts/feeds install -a -p qmodem
 
