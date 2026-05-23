@@ -1,0 +1,61 @@
+name: Build QModem Packages Only
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build QModem for ${{ matrix.arch }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          # Target 1: ARM 64-bit (aarch64 / armv8)
+          - arch: aarch64_generic
+            sdk_url: https://openwrt.org
+          
+          # Target 2: PC / Laptop / VPS 64-bit (x86_64)
+          - arch: x86_64
+            sdk_url: https://openwrt.org
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libncurses5-dev gawk git gettext libssl-dev xsltproc rsync wget unzip xz-utils
+
+      - name: Download and Setup OpenWrt SDK
+        run: |
+          wget -qO sdk.tar.xz "${{ matrix.sdk_url }}"
+          mkdir sdk && tar -xf sdk.tar.xz -C sdk --strip-components=1
+          rm sdk.tar.xz
+
+      - name: Add QModem Feed Source
+        run: |
+          cd sdk
+          echo 'src-git qmodem https://github.com' >> feeds.conf.default
+          ./scripts/feeds update qmodem
+          ./scripts/feeds install -a -p qmodem
+
+      - name: Compile QModem Packages
+        run: |
+          cd sdk
+          # Membuat konfigurasi default SDK
+          make defconfig
+          # Mengompilasi aplikasi QModem beserta paket dependensi kustomnya saja
+          make package/luci-app-qmodem/compile V=s -j$(nproc)
+
+      - name: Organize Output Files (.ipk / .apk)
+        run: |
+          mkdir -p bin_output/${{ matrix.arch }}
+          # Menyalin seluruh file hasil kompilasi ke folder khusus
+          find sdk/bin/ -name "*.ipk" -o -name "*.apk" | xargs -I {} cp {} bin_output/${{ matrix.arch }}/
+
+      - name: Upload Binary Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: QModem-${{ matrix.arch }}-packages
+          path: bin_output/${{ matrix.arch }}/
