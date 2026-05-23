@@ -47,15 +47,17 @@ jobs:
       - name: Fix and Set Clean QModem Feed
         run: |
           cd sdk
-          # Menggunakan trik Base64 agar alamat web aman dan tidak terpotong otomatis oleh sistem GitHub Anda
-          echo "c3JjLWdpdCBiYXNlIGh0dHBzOi8vZ2l0aHViLmNvbS9vcGVud3J0L29wZW53cnQuZ2l0O29wZW53cnQtMjQuMTAKc3JjLWdpdCBwYWNrYWdlcyBodHRwczovL2dpdGh1Yi5jb20vb3BlbndydC9wYWNrYWdlcy5naXQ7b3BlbndydC0yNC4xMApzcmMtZ2l0IGx1Y2kgaHR0cHM6Ly9naXRodWIuY29tL29wZW53cnQvbHVjaS5naXQ7b3BlbndydC0yNC4xMApzcmMtZ2l0IHJvdXRpbmcgaHR0cHM6Ly9naXRodWIuY29tL29wZW53cnQvcm91dGluZy5naXQ7b3BlbndydC0yNC4xMApzcmMtZ2l0IHRlbGVwaG9ueSBodHRwczovL2dpdGh1Yi5jb20vb3BlbndydC90ZWxlcGhvbnkuZ2l0O29wZW53cnQtMjQuMTAKc3JjLWdpdCBxbW9kZW0gaHR0cHM6Ly9naXRodWIuY29tL0ZVanIvUU1vZGVtLmdpdDttYWluCg==" | base64 -d > feeds.conf.default
+          # Add the QModem feed source
+          echo 'src-git qmodem https://github.com/FUjr/QModem.git;main' >> feeds.conf.default
+          # Update and install the feed packages
           ./scripts/feeds update qmodem
           ./scripts/feeds install -a -p qmodem
-
+          
       - name: Compile QModem Packages
         run: |
           cd sdk
-          make defconfig
+          # make defconfig
+          make menuconfig
           # Mengompilasi aplikasi utama QModem beserta seluruh paket pendukung kustom bawaannya
           make package/luci-app-qmodem/compile V=s -j$(nproc)
 
