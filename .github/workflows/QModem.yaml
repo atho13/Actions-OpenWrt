@@ -10,11 +10,11 @@ jobs:
     strategy:
       matrix:
         include:
-          # Target 1: ARM 64-bit (aarch64 / armv8)
+          # Target 1: Router ARM 64-bit Teman Anda (aarch64) menggunakan basis OpenWrt 23.05 terbaru
           - arch: aarch64_generic
             sdk_url: https://openwrt.org
           
-          # Target 2: PC / Laptop / VPS 64-bit (x86_64)
+          # Target 2: PC / Laptop / STB / VPS 64-bit (x86_64)
           - arch: x86_64
             sdk_url: https://openwrt.org
 
@@ -36,22 +36,19 @@ jobs:
       - name: Add QModem Feed Source
         run: |
           cd sdk
-          echo 'src-git qmodem https://github.com' >> feeds.conf.default
+          echo 'src-git qmodem https://github.com/FUjr/QModem.git;main' >> feeds.conf.default
           ./scripts/feeds update qmodem
           ./scripts/feeds install -a -p qmodem
 
       - name: Compile QModem Packages
         run: |
           cd sdk
-          # Membuat konfigurasi default SDK
           make defconfig
-          # Mengompilasi aplikasi QModem beserta paket dependensi kustomnya saja
           make package/luci-app-qmodem/compile V=s -j$(nproc)
 
-      - name: Organize Output Files (.ipk / .apk)
+      - name: Organize Output Files
         run: |
           mkdir -p bin_output/${{ matrix.arch }}
-          # Menyalin seluruh file hasil kompilasi ke folder khusus
           find sdk/bin/ -name "*.ipk" -o -name "*.apk" | xargs -I {} cp {} bin_output/${{ matrix.arch }}/
 
       - name: Upload Binary Artifacts
