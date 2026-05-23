@@ -33,13 +33,13 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential libncurses5-dev gawk git gettext libssl-dev xsltproc rsync wget unzip xz-utils
+          sudo apt-get install -y build-essential libncurses5-dev gawk git gettext libssl-dev xsltproc rsync wget unzip zstd
 
       - name: Download and Setup OpenWrt SDK
         run: |
-          wget -qO sdk.tar.xz "${{ matrix.sdk_url }}"
-          mkdir sdk && tar -xf sdk.tar.xz -C sdk --strip-components=1
-          rm sdk.tar.xz
+          wget -qO sdk.tar.zst "${{ matrix.sdk_url }}"
+          mkdir sdk && tar --use-compress-program=zstd -xf sdk.tar.zst -C sdk --strip-components=1
+          rm sdk.tar.zst
 
       - name: Add QModem Feed Source
         run: |
@@ -57,11 +57,11 @@ jobs:
       - name: Organize Output Files
         run: |
           mkdir -p bin_output/${{ matrix.version }}/${{ matrix.arch }}
-          # Mengumpulkan file .ipk atau .apk hasil rakitan
           find sdk/bin/ -name "*.ipk" -o -name "*.apk" | xargs -I {} cp {} bin_output/${{ matrix.version }}/${{ matrix.arch }}/
 
       - name: Upload Binary Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: QModem-${{ matrix.version }}-${{ matrix.arch }}-packages
+          name: QModem-${{ matrix.version }}--${{ matrix.arch }}-packages
           path: bin_output/${{ matrix.version }}/${{ matrix.arch }}/
+
