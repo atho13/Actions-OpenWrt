@@ -56,6 +56,7 @@ jobs:
         run: |
           cd sdk
           make defconfig
+          # Mengompilasi aplikasi utama QModem beserta seluruh paket pendukung kustom bawaannya
           make package/luci-app-qmodem/compile V=s -j$(nproc)
 
       - name: Organize Output Files
