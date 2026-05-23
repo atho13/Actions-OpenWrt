@@ -1,22 +1,30 @@
-name: Build QModem Packages Only
+name: Build QModem for Modern OpenWrt
 
 on:
   workflow_dispatch:
 
 jobs:
   build:
-    name: Build QModem for ${{ matrix.arch }}
+    name: Build QModem (${{ matrix.version }} - ${{ matrix.arch }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
         include:
-          # Target 1: Router ARM 64-bit Teman Anda (aarch64) menggunakan basis OpenWrt 23.05 terbaru
-          - arch: aarch64_generic
-            sdk_url: https://openwrt.org
-          
-          # Target 2: PC / Laptop / STB / VPS 64-bit (x86_64)
-          - arch: x86_64
-            sdk_url: https://openwrt.org
+          # --- OPENWRT 24.10 TARGETS (.ipk) ---
+          - version: "24.10.4"
+            arch: "aarch64_generic"
+            sdk_url: "https://openwrt.org"
+          - version: "24.10.4"
+            arch: "x86_64"
+            sdk_url: "https://openwrt.org"
+
+          # --- OPENWRT 25.12 TARGETS (.apk) ---
+          - version: "25.12.0"
+            arch: "aarch64_generic"
+            sdk_url: "https://openwrt.org"
+          - version: "25.12.0"
+            arch: "x86_64"
+            sdk_url: "https://openwrt.org"
 
     steps:
       - name: Checkout Repository
@@ -36,7 +44,7 @@ jobs:
       - name: Add QModem Feed Source
         run: |
           cd sdk
-          echo 'src-git qmodem https://github.com/FUjr/QModem.git;main' >> feeds.conf.default
+          echo 'src-git qmodem https://github.com' >> feeds.conf.default
           ./scripts/feeds update qmodem
           ./scripts/feeds install -a -p qmodem
 
@@ -48,11 +56,12 @@ jobs:
 
       - name: Organize Output Files
         run: |
-          mkdir -p bin_output/${{ matrix.arch }}
-          find sdk/bin/ -name "*.ipk" -o -name "*.apk" | xargs -I {} cp {} bin_output/${{ matrix.arch }}/
+          mkdir -p bin_output/${{ matrix.version }}/${{ matrix.arch }}
+          # Mengumpulkan file .ipk atau .apk hasil rakitan
+          find sdk/bin/ -name "*.ipk" -o -name "*.apk" | xargs -I {} cp {} bin_output/${{ matrix.version }}/${{ matrix.arch }}/
 
       - name: Upload Binary Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: QModem-${{ matrix.arch }}-packages
-          path: bin_output/${{ matrix.arch }}/
+          name: QModem-${{ matrix.version }}-${{ matrix.arch }}-packages
+          path: bin_output/${{ matrix.version }}/${{ matrix.arch }}/
