@@ -1,0 +1,67 @@
+name: 2QModem for Modern OpenWrt
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build QModem (${{ matrix.version }} - ${{ matrix.arch }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          # --- OPENWRT 24.10 TARGETS (.ipk) ---
+          - version: "24.10.6"
+            arch: "aarch64_generic"
+            sdk_url: "https://openwrt.org"
+          - version: "24.10.6"
+            arch: "x86_64"
+            sdk_url: "https://openwrt.org"
+
+          # --- OPENWRT 25.12 TARGETS (.apk) ---
+          - version: "25.12.4"
+            arch: "aarch64_generic"
+            sdk_url: "https://openwrt.org"
+          - version: "25.12.4"
+            arch: "x86_64"
+            sdk_url: "https://openwrt.org"
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libncurses5-dev gawk git gettext libssl-dev xsltproc rsync wget unzip zstd
+
+      - name: Download and Setup OpenWrt SDK
+        run: |
+          wget -qO sdk.tar.zst "${{ matrix.sdk_url }}"
+          mkdir sdk && tar --use-compress-program=zstd -xf sdk.tar.zst -C sdk --strip-components=1
+          rm sdk.tar.zst
+
+      - name: Fix and Set Clean QModem Feed
+        run: |
+          cd sdk
+          # Menggunakan trik Base64 agar alamat web aman dan tidak terpotong otomatis oleh sistem GitHub Anda
+          echo "c3JjLWdpdCBiYXNlIGh0dHBzOi8vZ2l0aHViLmNvbS9vcGVud3J0L29wZW53cnQuZ2l0O29wZW53cnQtMjQuMTAKc3JjLWdpdCBwYWNrYWdlcyBodHRwczovL2dpdGh1Yi5jb20vb3BlbndydC9wYWNrYWdlcy5naXQ7b3BlbndydC0yNC4xMApzcmMtZ2l0IGx1Y2kgaHR0cHM6Ly9naXRodWIuY29tL29wZW53cnQvbHVjaS5naXQ7b3BlbndydC0yNC4xMApzcmMtZ2l0IHJvdXRpbmcgaHR0cHM6Ly9naXRodWIuY29tL29wZW53cnQvcm91dGluZy5naXQ7b3BlbndydC0yNC4xMApzcmMtZ2l0IHRlbGVwaG9ueSBodHRwczovL2dpdGh1Yi5jb20vb3BlbndydC90ZWxlcGhvbnkuZ2l0O29wZW53cnQtMjQuMTAKc3JjLWdpdCBxbW9kZW0gaHR0cHM6Ly9naXRodWIuY29tL0ZVanIvUU1vZGVtLmdpdDttYWluCg==" | base64 -d > feeds.conf.default
+          ./scripts/feeds update qmodem
+          ./scripts/feeds install -a -p qmodem
+
+      - name: Compile QModem Packages
+        run: |
+          cd sdk
+          make defconfig
+          make package/luci-app-qmodem/compile V=s -j$(nproc)
+
+      - name: Organize Output Files
+        run: |
+          mkdir -p bin_output/${{ matrix.version }}/${{ matrix.arch }}
+          find sdk/bin/ -name "*.ipk" -o -name "*.apk" | xargs -I {} cp {} bin_output/${{ matrix.version }}/${{ matrix.arch }}/
+
+      - name: Upload Binary Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: QModem-${{ matrix.version }}--${{ matrix.arch }}-packages
+          path: bin_output/${{ matrix.version }}/${{ matrix.arch }}/
